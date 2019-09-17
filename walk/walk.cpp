@@ -81,7 +81,55 @@ public:
 		unlink(ppmname);
 	}
 };
-Image img[1] = {"images/walk.gif"};
+class Image2 {
+public:
+	int width, height;
+	unsigned char *data;
+	~Image2() { delete [] data; }
+	Image2(const char *fname) {
+        
+		if (fname[0] == '\0')
+			return;
+		//printf("fname **%s**\n", fname);
+		char name[40];
+		strcpy(name, fname);
+		int slen = strlen(name);
+		name[slen-4] = '\0';
+		//printf("name **%s**\n", name);
+		char ppmname[80];
+		sprintf(ppmname,"%s.ppm", name);
+		//printf("ppmname **%s**\n", ppmname);
+		char ts[100];
+		//system("convert eball.jpg eball.ppm");
+		sprintf(ts, "convert %s %s", fname, ppmname);
+		system(ts);
+		sprintf(ts, "%s", name);
+        
+		FILE *fpi = fopen(ppmname, "r");
+        //FILE *fpi = fopen(fname, "r");
+		if (fpi) {
+			char line[200];
+			fgets(line, 200, fpi);
+			fgets(line, 200, fpi);
+			while (line[0] == '#')
+				fgets(line, 200, fpi);
+			sscanf(line, "%i %i", &width, &height);
+			fgets(line, 200, fpi);
+			//get pixel data
+			int n = width * height * 3;			
+			data = new unsigned char[n];			
+			for (int i=0; i<n; i++)
+				data[i] = fgetc(fpi);
+			fclose(fpi);
+		} else {
+			printf("ERROR opening image: %s\n",fname);
+			exit(0);
+		}
+		//unlink(ppmname);
+	}
+};
+
+Image img[1] = {"images/shift.gif"};
 
 
 //-----------------------------------------------------------------------------
@@ -241,7 +289,8 @@ int main(void)
 	return 0;
 }
 
-unsigned char *buildAlphaData(Image *img)
+unsigned char *buildAlphaData(Image *img) //was
+//unsigned char *buildAlphaData(Image2 *img) //is
 {
 	//add 4th component to RGB stream...
 	int i;
@@ -474,8 +523,11 @@ void render(void)
 		glEnd();
 		glPopMatrix();
 	}
-	float h = 200.0;
-	float w = h * 0.5;
+	//float h = 200.0;
+	//float w = h * 0.5;
+    //float h = 256;
+    float h = 64;
+    float w = h * 0.8;
 	glPushMatrix();
 	glColor3f(1.0, 1.0, 1.0);
 	glBindTexture(GL_TEXTURE_2D, g.walkTexture);
@@ -483,11 +535,11 @@ void render(void)
 	glEnable(GL_ALPHA_TEST);
 	glAlphaFunc(GL_GREATER, 0.0f);
 	glColor4ub(255,255,255,255);
-	int ix = g.walkFrame % 8;
+	int ix = g.walkFrame % 5;
 	int iy = 0;
 	if (g.walkFrame >= 8)
 		iy = 1;
-	float tx = (float)ix / 8.0;
+	float tx = (float)ix / 7.0;
 	float ty = (float)iy / 2.0;
 	glBegin(GL_QUADS);
 		glTexCoord2f(tx,      ty+.5); glVertex2i(cx-w, cy-h);
